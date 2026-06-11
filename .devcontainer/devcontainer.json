@@ -1,5 +1,5 @@
 {
   "name": "algorithms-project",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  "postStartCommand": "git pull --ff-only"
+  "postStartCommand": "git pull --rebase --autostash"
 }
