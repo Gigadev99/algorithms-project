@@ -1,5 +1,5 @@
 {
   "name": "algorithms-project",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  "postStartCommand": "bash -lc 'if git symbolic-ref -q HEAD >/dev/null; then git pull --rebase --autostash; else echo \"Detached HEAD; skipping auto-pull\"; fi'"
+  "postStartCommand": "bash -lc 'if git symbolic-ref -q HEAD >/dev/null; then git pull --rebase --autostash; else echo \"Repository is in detached HEAD state; automatic pull skipped. Checkout a branch to enable auto-pull\"; fi'"
 }
