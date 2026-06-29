@@ -777,16 +777,17 @@ void runComparisonModule(const vector<AlgorithmResult>& results, const string& s
         // Format the selected task count or sequence
         int taskCount = res.selectedTaskIDs.size();
         
-        // Generate analytical commentary based on performance metrics
+        // Generate commentary based on performance metrics
+         
         string comment = "";
-        if (res.strategy.find("Sorting") != string::npos) {
-            comment = "Prioritizes all tasks.";
+        if (res.strategy.find("AI Prediction") != string::npos) {
+            comment = "Rule-based prediction using time pressure, deadlines, and importance variation.";
         } else if (res.strategy.find("Greedy") != string::npos) {
-            comment = "Fast evaluation; approximate local optima resolution.";
+            comment = "Selects tasks greedily by ratio; stays within time budget";
         } else if (res.strategy.find("Dynamic Programming") != string::npos) {
-            comment = "Guaranteed optimal value configuration.";
-        } else if (res.strategy.find("AI Prediction") != string::npos) {
-            comment = "Evaluated contextual scenario metadata.";
+            comment = "Optimal selection within time budget; maximizes importance";
+        } else if (res.strategy.find("Sorting") != string::npos) {
+            comment = "Ranks all tasks by score; ignores time budget constraint";
         }
         cout << fixed << setprecision(2);
         cout << left 
