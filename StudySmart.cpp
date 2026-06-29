@@ -311,8 +311,7 @@ AlgorithmResult runSortingModule(vector<StudyTask> tasks, double timeLimit) {
 } 
 
 
-
-// ============================================================
+ 
 // MODULE 3: GREEDY PLANNING MODULE (Member 3)
 // ============================================================
 // Selected greedy rule: HIGHEST IMPORTANCE-TO-TIME RATIO FIRST
@@ -632,7 +631,111 @@ int bestImp = 0;
 }
 
 
+/*
+Feature Description
+Number of tasks Total number of study tasks in the scenario
+Total required study time Sum of all task durations
+Available study time Total study time available to the student
+Time pressure ratio Total required time divided by available time
+Average importance Average importance score of all tasks
+Deadline tightness How close the deadlines are
+Importance variation Whether task importance scores are similar or very different
+*/
+// ============================================================
+// MODULE 5: ML RECOMMENDATION MODULE
+// ============================================================
+AlgorithmResult runMLModule(const vector<StudyTask>& tasks, double availableTime) {
+    AlgorithmResult result;
+    result.strategy = "ML Recommendation";
+    result.totalTime = 0.0;
+    result.totalImportance = 0;
+    result.executionTime = 0.0;
 
+    if (tasks.empty() || availableTime <= 0) {
+        cout << "\nError: No dataset loaded or invalid available time.\n";
+        result.strategy = "Not Run";
+        return result;
+    }
+
+    auto start = high_resolution_clock::now();
+
+    
+    // Feature Extraction
+    // These are the extracted features for the ML model to make a recommendation.
+    int numTasks = tasks.size();
+    double totalRequiredTime = 0.0;
+    double totalImportanceScore = 0.0;
+    double timePressureRatio;
+    double averageImportance;
+    double deadlineTightness; 
+    int importanceVariation;
+
+    int maxImportance = 0;
+    int minImportance = 5; 
+    int tightDeadlineCount = 0;
+
+    for (const auto& t : tasks) {
+        totalRequiredTime += t.estimated_time;
+        totalImportanceScore += t.importance_score;
+        
+        maxImportance = max(maxImportance, t.importance_score);
+        minImportance = min(minImportance, t.importance_score);
+        
+        if (t.deadline_days <= 3.0) tightDeadlineCount++;
+    }
+
+    timePressureRatio   = totalRequiredTime / availableTime;
+    averageImportance   = totalImportanceScore / numTasks;
+    deadlineTightness   = (double)tightDeadlineCount / numTasks; 
+    importanceVariation = maxImportance - minImportance;
+
+    
+    // Rule-Based Decision Tree. It uses a simple heuristic
+    string recommendedStrategy = "";
+
+    // TODO: Adjust these thresholds based on the 8-15 examples in your report
+    if (timePressureRatio > 1.2) {
+        // High time pressure
+        if (importanceVariation >= 2) {
+            recommendedStrategy = "Dynamic Programming"; 
+        } else {
+            recommendedStrategy = "Greedy strategy"; 
+        }
+    } else if (deadlineTightness > 0.4) {
+        // Many urgent tasks, prioritization is the main goal
+        recommendedStrategy = "Sorting-based ranking"; 
+    } else {
+        // Low time pressure, default simple plan
+        recommendedStrategy = "Sorting-based ranking"; 
+    }
+
+    auto end = high_resolution_clock::now();
+    duration<double, milli> elapsed = end - start;
+    result.executionTime = elapsed.count();
+
+    // --------------------------------------------------------
+    // 3. CONSOLE OUTPUT
+    // --------------------------------------------------------
+    cout << fixed << setprecision(2);
+    cout << "\n==========================================================================\n";
+    cout << " MODULE 5: AI/ML RECOMMENDATION (Rule-Based Decision Tree)\n";
+    cout << "==========================================================================\n";
+    cout << " Extracted Scenario Features:\n";
+    cout << "  - Number of tasks       : " << numTasks << "\n";
+    cout << "  - Required study time   : " << totalRequiredTime << " hrs\n";
+    cout << "  - Available study time  : " << availableTime << " hrs\n";
+    cout << "  - Time pressure ratio   : " << timePressureRatio << "\n";
+    cout << "  - Average importance    : " << averageImportance << "\n";
+    cout << "  - Deadline tightness    : " << deadlineTightness * 100 << "% of tasks\n";
+    cout << "  - Importance variation  : " << importanceVariation << "\n";
+    cout << "--------------------------------------------------------------------------\n";
+    cout << " >>> Recommended Strategy: " << recommendedStrategy << " <<<\n";
+    cout << "==========================================================================\n";
+
+    // Set the final result string to pass to Module 6
+    result.strategy = "AI Prediction: " + recommendedStrategy;
+    return result;
+}
 // ==========================================
 // MAIN PROGRAM
 // ==========================================
@@ -688,19 +791,8 @@ int main() {
                 
                 break;
             case 7:
-                cout << "\n[-->] Executing Module 5 (AI/ML Recommendation)...\n";
-                // Member 5: implement runAIModule() and return an AlgorithmResult.
-                // Features to extract from taskDataset and availableStudyTime:
-                //   - taskDataset.size()                    -> number of tasks
-                //   - sum of estimated_time                 -> total required time
-                //   - availableStudyTime                    -> available time
-                //   - totalRequired / availableStudyTime    -> time pressure ratio
-                //   - sum of importance_score / n           -> average importance
-                //   - count of tasks where deadline_days <= 3 -> deadline tightness
-                //   - max importance - min importance       -> importance variation
-                // Uncomment the line below once your function is ready:
-                // moduleResults[3] = runAIModule(taskDataset, availableStudyTime);
-                cout << "[!] AI/ML module not yet connected. Member 5: implement runAIModule().\n";//delete this once done
+                cout << "\n[-->] Executing Module 5 (ML Recommendation)...\n";
+                moduleResults[3] = runMLModule(taskDataset, availableStudyTime);
                 break;
             case 8:
                 cout << "\n[-->] Executing Module 6 (Performance Comparison)...\n";
