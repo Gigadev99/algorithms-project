@@ -255,7 +255,7 @@ AlgorithmResult runSortingModule(vector<StudyTask> tasks, double timeLimit) {
     (void)timeLimit; // Safely ignore unused parameter warning
 
     AlgorithmResult result;
-    result.strategy = "Sorting-based ranking (Quick Sort by Value/Time Ratio)";
+    result.strategy = "Sorting-based ranking";
     result.totalTime = 0.0;
     result.totalImportance = 0;
 
@@ -342,7 +342,7 @@ AlgorithmResult runSortingModule(vector<StudyTask> tasks, double timeLimit) {
 // ============================================================
 AlgorithmResult runGreedyModule(const vector<StudyTask>& tasks, double availableTime) {
     AlgorithmResult result;
-    result.strategy    = "Greedy (Importance/Time Ratio)";
+    result.strategy    = "Greedy";
     result.totalTime       = 0.0;
     result.totalImportance = 0;
     result.executionTime = 0.0;
@@ -699,7 +699,7 @@ AlgorithmResult runMLModule(const vector<StudyTask>& tasks, double availableTime
         if (importanceVariation >= 2) {
             recommendedStrategy = "Dynamic Programming"; 
         } else {
-            recommendedStrategy = "Greedy strategy"; 
+            recommendedStrategy = "Greedy"; 
         }
     } else if (deadlineTightness > 0.4) {
         // Many urgent tasks, prioritization is the main goal
