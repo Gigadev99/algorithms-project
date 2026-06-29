@@ -11,26 +11,24 @@ using namespace std;
 using namespace std::chrono;
 
 
-// Study Task Data Structure
 struct StudyTask {
     string id;
     string name;
     double estimated_time;   // in hours
     int importance_score;  // Scale 1 - 5
-    double deadline_days;    // in days
+    double deadline_days;    
     int difficulty_level;  // Scale 1 - 5
     string task_type; 
 };
 
-// Algorithm Result Structure
 // Every module (Sorting, Greedy, DP, AI/ML) must fill and return one of these.
 // Module 6 reads the global moduleResults vector to build the comparison table.
 struct AlgorithmResult {
-    string strategyName;          // e.g. "Greedy Strategy"
+    string strategy;                // e.g. "Greedy Strategy"
     vector<string> selectedTaskIDs; // IDs of tasks selected/ranked, e.g. {"T1","T3"}
-    double totalTime;             // sum of estimated_time of selected tasks
-    int totalImportance;          // sum of importance_score of selected tasks
-    double executionTimeMs;       // measured using clock(), in milliseconds
+    double totalTime;            
+    int totalImportance;          
+    double executionTime;       // measured using clock() in milliseconds
 };
 
 // Global variables 
@@ -43,50 +41,50 @@ string activeScenarioName = "None Loaded";
 // Initialised with empty placeholders so Module 6 can detect unrun modules.
 vector<AlgorithmResult> moduleResults(4, {"Not Run", {}, 0.0, 0, 0.0});
 
+// Helper functions
 
-// Input helper functions for integers 
 int readInt(const string& prompt, int low, int high) {
     int val;
     while (true) {
-        if (!prompt.empty()) cout << prompt;
+        cout << prompt;
         if (cin >> val && val >= low && val <= high) {
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            return val;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                return val;
         }
-        cin.clear();
+        cin.clear(); // if input failed, reset buffer
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << "[!] Enter a whole number between " << low << " and " << high << ".\n";
+        cout << "Invalid input or the entered number is out or range. Try again.\n";
     }
 }
-
-// Input helper functions for doubles 
 double readDouble(const string& prompt, double low, double high) {
     double val;
     while (true) {
-        if (!prompt.empty()) cout << prompt;
+        cout << prompt;
         if (cin >> val && val >= low && val <= high) {
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            return val;
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                return val;
         }
-        cin.clear();
+        cin.clear(); // if input failed, reset buffer
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << "[!] Enter a number between " << low << " and " << high << ".\n";
+        cout << "Invalid input or the entered number is out or range. Try again.\n";
     }
 }
+void printBar(char c = '-', int length = 50, bool startwithnewline = false) { 
+    if (startwithnewline) cout << "\n";
+    for (int i = 0; i < length; ++i) cout << c; 
+    cout << "\n";
+}
 
-
-// Data Printing
 void displayDataset() {
     if (taskDataset.empty()) {
-        cout << "\n[!] No dataset loaded. Please choose Option 1 or 2 first.\n";
+        cout << "\nNo dataset loaded. Please choose Option 1 or 2 first.\n";
         return;
     }
 
-    cout << "\n========================================================================================\n";
+    printBar();
     cout << " CURRENT SCENARIO: " << activeScenarioName << " | Available Study Time: " << availableStudyTime << " hours\n";
-    cout << "========================================================================================\n";
+    printBar();
     
-    // to display decimals cleanly like: 2.5 and 3.0
     cout << fixed << setprecision(1); 
     
     cout << left 
@@ -97,8 +95,7 @@ void displayDataset() {
          << setw(10) << "Deadline" 
          << setw(12) << "Difficulty" 
          << setw(12) << "Type" << "\n";
-    cout << "----------------------------------------------------------------------------------------\n";
-
+    printBar();
     double totalRequiredTime = 0.0; 
     for (const auto& task : taskDataset) {
         cout << left 
@@ -111,62 +108,55 @@ void displayDataset() {
              << setw(12) << task.task_type << "\n";
         totalRequiredTime += task.estimated_time;
     }
-    cout << "----------------------------------------------------------------------------------------\n";
+    printBar();
     cout << "Total Tasks: " << taskDataset.size() 
          << " | Total Required Time: " << totalRequiredTime << " hours\n";
-    cout << "========================================================================================\n";
+    printBar('=');
 }
 
 
-// Built-in Scenario Generation
 void loadBuiltInScenarios() {
     taskDataset.clear();
     
     cout << "\nSelect a scenario:\n";
     cout << "1. Low-Pressure Scenario (Time budget is high)\n";
     cout << "2. Deadline-Focused Scenario (Several tasks are urgent)\n";
-    cout << "3. High-Pressure Scenario (Time budget is extremely low)\n";
+    cout << "3. High-Pressure Scenario (Time budget is low)\n";
     
     int choice = readInt("Enter choice (1-3): ", 1, 3);
 
     vector<StudyTask> baseTasks = {
-        {"T1", "Revise Dynamic Programming", 3.5, 5, 7.0, 4, "Revision"},
-        {"T2", "Complete Java Tutorial",     2.0, 4, 5.0, 3, "Tutorial"},
-        {"T3", "Practise Greedy Problems",   2.0, 3, 6.0, 2, "Practice"},
-        {"T4", "Do NLP Assignment",          4.0, 5, 8.0, 4, "Assignment"},
-        {"T5", "Study CNN Lecture",          2.5, 2, 9.0, 1, "Lecture"}, 
-        {"T6", "Practice OS Lab Exercise3", 2.0, 3, 4.0, 3, "Practice"},
-        {"T7", "Complete OS Lab Report",     2.0, 4, 10.0, 3, "Assignment"},
-        {"T8", "Study Dynamic Programming",  1.0, 1, 12.0, 1, "Lecture"},
-        {"T9", "Deep Learning Quiz Review",  1.0, 3, 5.0, 2, "Revision"},
+        {"T1", "Revise Dynamic Programming",  3.5, 5, 7.0,  4, "Revision"},
+        {"T2", "Complete Java Tutorial",      2.0, 4, 5.0,  3, "Tutorial"},
+        {"T3", "Practise Greedy Problems",    2.0, 3, 6.0,  2, "Practice"},
+        {"T4", "Do NLP Assignment",           4.0, 5, 8.0,  4, "Assignment"},
+        {"T5", "Study CNN Lecture",           2.5, 2, 9.0,  1, "Lecture"}, 
+        {"T6", "Practice OS Lab Exercise3",   2.0, 3, 4.0,  3, "Practice"},
+        {"T7", "Complete OS Lab Report",      2.0, 4, 10.0, 3, "Assignment"},
+        {"T8", "Study Dynamic Programming",   1.0, 1, 12.0, 1, "Lecture"},
+        {"T9", "Deep Learning Quiz Review",   1.0, 3, 5.0,  2, "Revision"},
         {"T10","Review Computer Vision Notes",1.5, 4, 14.0, 3, "Revision"}
     };
-
+    taskDataset = baseTasks; 
     switch (choice) {
         case 1:
-            taskDataset = baseTasks;
             availableStudyTime = 30.0; 
             activeScenarioName = "Low-Pressure Scenario";
-            cout << "\n[+] Low-pressure scenario loaded successfully.\n";
+            cout << "\nLow-pressure scenario loaded.\n";
             break;
         case 2:
-            taskDataset = baseTasks;
             taskDataset[0].deadline_days = 1.5; 
             taskDataset[3].deadline_days = 2.0; 
             taskDataset[5].deadline_days = 1.0; 
             availableStudyTime = 15.0; 
             activeScenarioName = "Deadline-Focused Scenario";
-            cout << "\n[+] Deadline-focused scenario loaded Successfully.\n";
+            cout << "\nDeadline-focused scenario loaded.\n";
             break;
         case 3:
-            taskDataset = baseTasks;
             availableStudyTime = 8.0;  
             activeScenarioName = "High-Pressure Scenario";
-            cout << "\n[+] High-pressure scenario loaded Successfully.\n";
-            break;
-        default:
-            cout << "\nInvalid choice! Returning to main menu.\n";
-            break;
+            cout << "\nHigh-pressure scenario loaded.\n";
+            break; 
     }
 }
 
@@ -176,13 +166,13 @@ void handleUserInputDataset() {
     taskDataset.clear();
     activeScenarioName = "Custom User-Defined Scenario";
 
-    cout << "\n====================================\n";
+    printBar('=', 38, true);
     cout << "     MANUAL DATASET INPUT MODE\n";
-    cout << "====================================\n";
+    printBar('=', 38);
     
     availableStudyTime = readDouble("Enter total Available Study Time for this scenario (in hours): ", 0.5, 999.0);
 
-    int numTasks = readInt("Enter the number of tasks you have, (must be between 8 and 15): ", 8, 15);
+    int numTasks = readInt("Enter the number of tasks you have: ", 1, 100);
 
     for (int i = 0; i < numTasks; i++) {
         StudyTask task;
@@ -202,21 +192,11 @@ void handleUserInputDataset() {
 
         taskDataset.push_back(task);
     }
-    cout << "\n[+] Custom dataset of " << numTasks << " tasks successfully loaded.\n";
+    cout << "\n[+] Custom dataset of " << numTasks << " tasks succesfully loaded.\n";
 }
 
 
-// ============================================================
-// MODULE 2: SORTING  DIVIDE-AND-CONQUER (QUICK SORT)
-// ============================================================
-
-// Helper function for swapping tasks
-void swapTasks(StudyTask& a, StudyTask& b) {
-    StudyTask temp = a;
-    a = b;
-    b = temp;
-}
-
+// MODULE 2: SORTING, DIVIDE-AND-CONQUER (QUICK SORT)
 
 // Median-of-Three Pre-Processor (selecting the pivot)
 void applyMedianOfThree(vector<StudyTask>& tasks, int low, int high) {
@@ -228,20 +208,20 @@ void applyMedianOfThree(vector<StudyTask>& tasks, int low, int high) {
 
     // Sort low, mid, and high elements in descending order
     if (ratioLow < ratioMid) {
-        swapTasks(tasks[low], tasks[mid]);
+        swap(tasks[low], tasks[mid]);
         swap(ratioLow, ratioMid); 
     }
     if (ratioLow < ratioHigh) {
-        swapTasks(tasks[low], tasks[high]);
+        swap(tasks[low], tasks[high]);
         swap(ratioLow, ratioHigh);
     }
     if (ratioMid < ratioHigh) {
-        swapTasks(tasks[mid], tasks[high]);
+        swap(tasks[mid], tasks[high]);
         swap(ratioMid, ratioHigh);
     }
 
     // Move the median value to the 'high' position to be the pivot
-    swapTasks(tasks[mid], tasks[high]);
+    swap(tasks[mid], tasks[high]);
 }
 
 // Partition Logic
@@ -255,10 +235,10 @@ int partitionTasks(vector<StudyTask>& tasks, int low, int high) {
         double currentRatio = tasks[j].importance_score / tasks[j].estimated_time;
         if (currentRatio > pivotRatio) { // Descending Order
             i++;
-            swapTasks(tasks[i], tasks[j]);
+            swap(tasks[i], tasks[j]);
         }
     }
-    swapTasks(tasks[i + 1], tasks[high]);
+    swap(tasks[i + 1], tasks[high]);
     return i + 1;
 }
 
@@ -277,7 +257,7 @@ AlgorithmResult runSortingModule(vector<StudyTask> tasks, double timeLimit) {
     (void)timeLimit; // Safely ignore unused parameter warning
 
     AlgorithmResult result;
-    result.strategyName = "Sorting-based ranking (Quick Sort by Value/Time Ratio)";
+    result.strategy = "Sorting-based ranking (Quick Sort by Value/Time Ratio)";
     result.totalTime = 0.0;
     result.totalImportance = 0;
 
@@ -289,7 +269,7 @@ AlgorithmResult runSortingModule(vector<StudyTask> tasks, double timeLimit) {
     
     auto end = high_resolution_clock::now();
     duration<double, milli> precise_duration = end - start;
-    result.executionTimeMs = precise_duration.count();
+    result.executionTime = precise_duration.count();
 
     // Populate Shared Result Schema Fields 
     for (const auto& task : tasks) {
@@ -299,34 +279,172 @@ AlgorithmResult runSortingModule(vector<StudyTask> tasks, double timeLimit) {
     }
 
     // Console Output 
-    cout << "\n  -------------------------------------------------------\n";
-    cout << "   RANKED STUDY TASKS (Quick Sort)\n";
-    cout << "  -------------------------------------------------------\n";
-    cout << "  " << left << setw(5)  << "ID"
-                        << setw(28) << "Task Name"
-                        << setw(10) << "Ratio"
-                        << setw(12) << "Importance" << "\n";
-    cout << "  " << string(55, '-') << "\n";
+    cout << "\n  ----------------------------------------------------------------------\n";
+    cout << "           RANKED STUDY TASKS (Quick Sort)\n";
+    cout << "  ----------------------------------------------------------------------\n";
+    
+    cout << "  " << left << setw(6)  << "Rank"
+                         << setw(8)  << "ID"
+                         << setw(35) << "Task Name"
+                         << setw(15) << "Ratio (Imp/Hr)" << "\n";
+    cout << "  " << string(70, '-') << "\n";
 
     if (tasks.empty()) {
         cout << "  [No tasks available to sort.]\n";
     } else {
+        int rank = 1;
         for (const auto& t : tasks) {
+            // Calculate ratio for display
             double ratio = t.importance_score / t.estimated_time;
-            cout << "  " << left << setw(5)  << t.id
-                                << setw(28) << t.name
-                                << fixed << setprecision(2) << setw(10) << ratio
-                                << setw(12) << t.importance_score << "\n";
+            
+            // Print the formatted row
+            cout << "  " << left << setw(6)  << rank++
+                                 << setw(8)  << t.id
+                                 << setw(35) << t.name
+                                 << fixed << setprecision(2) << setw(15) << ratio << "\n";
         }
     }
 
-    cout << "  " << string(55, '-') << "\n";
-    cout << "\n  Execution Time  : " << fixed << setprecision(4) << result.executionTimeMs << " ms\n";
-    cout << "========================================================\n";
+    cout << "  " << string(70, '-') << "\n";
+    cout << "  [+] Quick Sort complete. Execution Time: " << fixed << setprecision(4) << result.executionTime << " ms\n";
+    cout << "========================================================================\n";
+
+    return result;
+} 
+
+
+
+// ============================================================
+// MODULE 3: GREEDY PLANNING MODULE (Member 3)
+// ============================================================
+// Selected greedy rule: HIGHEST IMPORTANCE-TO-TIME RATIO FIRST
+//
+// Justification of the rule:
+//   The ratio (importance / study time) measures how much academic
+//   value the student gains for every hour of study. Picking tasks
+//   with the highest ratio first fills the limited time budget with
+//   the most "profitable" tasks. This balances two factors at once:
+//   importance alone ignores task length, and shortest-time-first
+//   ignores academic value.
+//
+// Tie-breaking rule:
+//   If two tasks have the same ratio, the task with the earlier
+//   deadline is placed first, because it is more urgent.
+//
+// Algorithm steps:
+//   1. Compute ratio = importance_score / estimated_time for each task.
+//   2. Sort tasks by ratio in descending order  -> O(n log n)
+//   3. Scan the sorted list once. Take a task if it still fits into
+//      the remaining study time, otherwise skip it.  -> O(n)
+//   Total time complexity: O(n log n). Space complexity: O(n).
+//
+// Note on optimality:
+//   This greedy strategy is fast but NOT always optimal for the
+//   0/1 task-selection problem (see counterexample in the report).
+//   The optimal result is produced by the DP module (Module 4).
+// ============================================================
+AlgorithmResult runGreedyModule(const vector<StudyTask>& tasks, double availableTime) {
+    AlgorithmResult result;
+    result.strategy    = "Greedy (Importance/Time Ratio)";
+    result.totalTime       = 0.0;
+    result.totalImportance = 0;
+    result.executionTime = 0.0;
+
+    if (tasks.empty()) {
+        cout << "\n[!] No dataset loaded. Please choose Option 1 or 2 first.\n";
+        result.strategy = "Not Run";
+        return result;
+    }
+
+    // ---------- TIMED SECTION START (algorithm only, no printing) ----------
+    clock_t startTime = clock();
+
+    // Step 1 + 2: copy tasks and sort by importance-to-time ratio (descending).
+    // A copy is used so the original dataset order is not changed for other modules.
+    vector<StudyTask> rankedTasks = tasks;
+    sort(rankedTasks.begin(), rankedTasks.end(),
+         [](const StudyTask& a, const StudyTask& b) {
+             double ratioA = a.importance_score / a.estimated_time;
+             double ratioB = b.importance_score / b.estimated_time;
+             if (ratioA != ratioB) return ratioA > ratioB; // higher ratio first
+             return a.deadline_days < b.deadline_days;     // tie-break: earlier deadline first
+         });
+
+    // Step 3: greedy selection. Take every task that still fits into the
+    // remaining time budget. Each task is either taken fully or skipped (0/1 rule).
+    double remainingTime = availableTime;
+    vector<StudyTask> selectedTasks;
+    vector<StudyTask> skippedTasks;
+
+    for (const auto& task : rankedTasks) {
+        if (task.estimated_time <= remainingTime) {
+            selectedTasks.push_back(task);
+            remainingTime          -= task.estimated_time;
+            result.totalTime       += task.estimated_time;
+            result.totalImportance += task.importance_score;
+            result.selectedTaskIDs.push_back(task.id);
+        } else {
+            skippedTasks.push_back(task);
+        }
+    }
+
+    clock_t endTime = clock();
+    result.executionTime = 1000.0 * (double)(endTime - startTime) / CLOCKS_PER_SEC;
+    // ---------- TIMED SECTION END ----------
+
+    // ---------- OUTPUT (not timed, so I/O does not distort the measurement) ----------
+    cout << fixed << setprecision(2);
+    cout << "\n==========================================================================\n";
+    cout << " MODULE 3: GREEDY PLANNING  |  Rule: Highest Importance-to-Time Ratio\n";
+    cout << " Scenario: " << activeScenarioName
+         << "  |  Available Time: " << availableTime << " hrs\n";
+    cout << "==========================================================================\n";
+
+    cout << "\nStep 1: Tasks ranked by ratio (importance / time), descending:\n";
+    cout << left << setw(6) << "Rank" << setw(6) << "ID"
+         << setw(30) << "Task Name"
+         << setw(12) << "Time(hrs)" << setw(12) << "Importance"
+         << setw(10) << "Ratio" << setw(10) << "Deadline" << "\n";
+    cout << "--------------------------------------------------------------------------\n";
+    for (size_t i = 0; i < rankedTasks.size(); i++) {
+        const auto& t = rankedTasks[i];
+        cout << left << setw(6) << (i + 1) << setw(6) << t.id
+             << setw(30) << t.name
+             << setw(12) << t.estimated_time
+             << setw(12) << t.importance_score
+             << setw(10) << (t.importance_score / t.estimated_time)
+             << setw(10) << t.deadline_days << "\n";
+    }
+
+    cout << "\nStep 2: Greedy selection result (tasks taken in ranked order if they fit):\n";
+    cout << "--------------------------------------------------------------------------\n";
+    if (selectedTasks.empty()) {
+        cout << "  No task fits into the available study time.\n";
+    } else {
+        for (const auto& t : selectedTasks) {
+            cout << "  [SELECTED] " << left << setw(6) << t.id << setw(30) << t.name
+                 << " (" << t.estimated_time << " hrs, importance " << t.importance_score << ")\n";
+        }
+    }
+    if (!skippedTasks.empty()) {
+        cout << "--------------------------------------------------------------------------\n";
+        for (const auto& t : skippedTasks) {
+            cout << "  [SKIPPED ] " << left << setw(6) << t.id << setw(30) << t.name
+                 << " (needs " << t.estimated_time << " hrs, does not fit)\n";
+        }
+    }
+
+    cout << "--------------------------------------------------------------------------\n";
+    cout << "Total Study Time Used : " << result.totalTime << " / " << availableTime << " hrs\n";
+    cout << "Unused Time Left      : " << remainingTime << " hrs\n";
+    cout << "Total Importance Score: " << result.totalImportance << "\n";
+    cout << fixed << setprecision(4);
+    cout << "Execution Time        : " << result.executionTime << " ms\n";
+    cout << fixed << setprecision(2);
+    cout << "==========================================================================\n";
 
     return result;
 }
-
 
 // ============================================================
 //  MODULE 4: Dynamic Programming - 0/1 Knapsack
@@ -565,9 +683,7 @@ int main() {
             case 5:
                 cout << "\n[-->] Executing Module 3 (Greedy Planning)... \n";
                 // Member 3: implement runGreedyModule() and return an AlgorithmResult.
-                // Uncomment the line below once your function is ready:
-                // moduleResults[1] = runGreedyModule(taskDataset, availableStudyTime);
-                cout << "[!] Greedy module not yet connected. Member 3: implement runGreedyModule().\n";//delete this once done
+                moduleResults[1] = runGreedyModule(taskDataset, availableStudyTime);
                 break;
             case 6:
                 cout << "\n[-->] Executing Module 4 (Dynamic Programming / 0-1 Knapsack)... \n";
