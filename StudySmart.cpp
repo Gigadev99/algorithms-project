@@ -651,12 +651,8 @@ Importance variation Whether task importance scores are similar or very differen
 // ============================================================
 // MODULE 5: AI RECOMMENDATION MODULE
 // ============================================================
-AlgorithmResult runAIModule(const vector<StudyTask>& tasks, double availableTime) {
+AlgorithmResult runAIModule(const vector<StudyTask>& tasks, vector<AlgorithmResult>& moduleResults, double availableTime) {
     AlgorithmResult result;
-    result.strategy = "AI Recommendation";
-    result.totalTime = 0.0;
-    result.totalImportance = 0;
-    result.executionTime = 0.0;
 
     if (tasks.empty() || availableTime <= 0) {
         cout << "\nError: No dataset loaded or invalid available time.\n";
@@ -666,7 +662,7 @@ AlgorithmResult runAIModule(const vector<StudyTask>& tasks, double availableTime
 
     auto start = high_resolution_clock::now();
 
-    
+
     // Feature Extraction
     // These are the extracted features for the AI model to make a recommendation.
     int numTasks = tasks.size();
@@ -737,6 +733,14 @@ AlgorithmResult runAIModule(const vector<StudyTask>& tasks, double availableTime
 
     // Set the final result string to pass to Module 6
     result.strategy = "AI Prediction: " + recommendedStrategy;
+    for (const auto& r : moduleResults) {
+        if (r.strategy.find(recommendedStrategy) != string::npos) {
+            result.selectedTaskIDs = r.selectedTaskIDs;
+            result.totalTime = r.totalTime;
+            result.totalImportance = r.totalImportance;
+            break;
+        }
+}
     return result;
 }
 
@@ -751,7 +755,7 @@ void runComparisonModule(const vector<AlgorithmResult>& results, const string& s
     
     // Print Table Header matching Table 7 requirement
     cout << left 
-         << setw(35) << "Strategy" 
+         << setw(38) << "Strategy" 
          << setw(15) << "Selected Tasks" 
          << setw(15) << "Total Time" 
          << setw(18) << "Total Importance" 
@@ -761,7 +765,7 @@ void runComparisonModule(const vector<AlgorithmResult>& results, const string& s
 
     for (const auto& res : results) {
         if (res.strategy == "Not Run") {
-            cout << left << setw(35) << "[Module Missing]" 
+            cout << left << setw(38) << "[Module Missing]" 
                  << setw(15) << "N/A" 
                  << setw(15) << "N/A" 
                  << setw(18) << "N/A" 
@@ -789,14 +793,8 @@ void runComparisonModule(const vector<AlgorithmResult>& results, const string& s
              << setw(38) << res.strategy 
              << setw(15) << taskCount;
              
-        if (res.strategy.find("AI Prediction") != string::npos) {
-            // AI prediction module simply identifies a target track; does not run calculations itself
-            cout << setw(15) << "N/A" 
-                 << setw(18) << "N/A";
-        } else {
-            cout << setw(15) << res.totalTime 
-                 << setw(18) << res.totalImportance;
-        }
+        cout << setw(15) << res.totalTime
+             << setw(18) << res.totalImportance;
         
         cout << fixed << setprecision(4) 
              << setw(18) << res.executionTime 
@@ -861,7 +859,7 @@ int main() {
                 break;
             case 7:
                 cout << "\n[-->] Executing Module 5 (AI Recommendation)...\n";
-                moduleResults[3] = runAIModule(taskDataset, availableStudyTime);
+                moduleResults[3] = runAIModule(taskDataset, moduleResults, availableStudyTime);
                 break;
             case 8:
                 cout << "\n[-->] Executing Module 6 (Performance Comparison)...\n";
