@@ -31,8 +31,9 @@ struct AlgorithmResult {
 
 // Global variables 
 vector<StudyTask> taskDataset;
+string taskTypes[] = {"Lecture", "Tutorial", "Assignment", "Practice", "Revision"};
 double availableStudyTime = 0.0; 
-string activeScenarioName = "None Loaded";
+string activeScenario = "None";
 
 // Stores results from each module run; used by Module 6 for comparison.
 // Index: 0 = Sorting, 1 = Greedy, 2 = DP, 3 = AI/ML
@@ -80,7 +81,7 @@ void displayDataset() {
     }
 
     printBar();
-    cout << " CURRENT SCENARIO: " << activeScenarioName << " | Available Study Time: " << availableStudyTime << " hours\n";
+    cout << " CURRENT SCENARIO: " << activeScenario << " | Available Study Time: " << availableStudyTime << " hours\n";
     printBar();
     
     cout << fixed << setprecision(1); 
@@ -139,7 +140,7 @@ void loadBuiltInScenarios() {
     switch (choice) {
         case 1:
             availableStudyTime = 30.0; 
-            activeScenarioName = "Low-Pressure Scenario";
+            activeScenario = "Low-Pressure Scenario";
             cout << "\nLow-pressure scenario loaded.\n";
             break;
         case 2:
@@ -147,12 +148,12 @@ void loadBuiltInScenarios() {
             taskDataset[3].deadline_days = 2.0; 
             taskDataset[5].deadline_days = 1.0; 
             availableStudyTime = 15.0; 
-            activeScenarioName = "Deadline-Focused Scenario";
+            activeScenario = "Deadline-Focused Scenario";
             cout << "\nDeadline-focused scenario loaded.\n";
             break;
         case 3:
             availableStudyTime = 8.0;  
-            activeScenarioName = "High-Pressure Scenario";
+            activeScenario = "High-Pressure Scenario";
             cout << "\nHigh-pressure scenario loaded.\n";
             break; 
     }
@@ -162,7 +163,7 @@ void loadBuiltInScenarios() {
 // Manual User Input 
 void handleUserInputDataset() {
     taskDataset.clear();
-    activeScenarioName = "Custom User-Defined Scenario";
+    activeScenario = "Custom User-Defined Scenario";
 
     printBar('=', 38, true);
     cout << "     MANUAL DATASET INPUT MODE\n";
@@ -186,8 +187,14 @@ void handleUserInputDataset() {
         task.difficulty_level = readInt  ("Enter difficulty level (1-5): ",                        1,   5);
 
         cout << "Enter task type (Lecture, Tutorial, Assignment, Practice, Revision): ";
-        getline(cin, task.task_type);
-
+        while (true) {
+            getline(cin, task.task_type);
+            // if entered task matches the existing task types
+            if (find(begin(taskTypes), end(taskTypes), task.task_type) != end(taskTypes)) {
+                break;
+            }
+            cout << "\nPlease enter a valid task type (Lecture, Tutorial, Assignment, Practice, Revision):\n";
+        }
         taskDataset.push_back(task);
     }
     cout << "\n[+] Custom dataset of " << numTasks << " tasks succesfully loaded.\n";
@@ -393,7 +400,7 @@ AlgorithmResult runGreedyModule(const vector<StudyTask>& tasks, double available
     cout << fixed << setprecision(2);
     cout << "\n==========================================================================\n";
     cout << " MODULE 3: GREEDY PLANNING  |  Rule: Highest Importance-to-Time Ratio\n";
-    cout << " Scenario: " << activeScenarioName
+    cout << " Scenario: " << activeScenario
          << "  |  Available Time: " << availableTime << " hrs\n";
     cout << "==========================================================================\n";
 
@@ -736,6 +743,72 @@ AlgorithmResult runMLModule(const vector<StudyTask>& tasks, double availableTime
     result.strategy = "AI Prediction: " + recommendedStrategy;
     return result;
 }
+
+
+// ============================================================
+// MODULE 6: PERFORMANCE MEASUREMENT AND COMPARISON
+// ============================================================
+void runComparisonModule(const vector<AlgorithmResult>& results, const string& scenario) {
+    cout << fixed << setprecision(2);
+    cout << " MODULE 6: PERFORMANCE COMPARISON SUMMARY\n";
+    cout << " Active Scenario: " << scenario << "\n";
+    
+    // Print Table Header matching Table 7 requirement
+    cout << left 
+         << setw(35) << "Strategy" 
+         << setw(15) << "Selected Tasks" 
+         << setw(15) << "Total Time" 
+         << setw(18) << "Total Importance" 
+         << setw(18) << "Execution Time" 
+         << "Comment\n";
+    cout << "\n";
+
+    for (const auto& res : results) {
+        if (res.strategy == "Not Run") {
+            cout << left << setw(35) << "[Module Missing]" 
+                 << setw(15) << "N/A" 
+                 << setw(15) << "N/A" 
+                 << setw(18) << "N/A" 
+                 << setw(18) << "N/A" 
+                 << "Execute this module from menu first.\n";
+            continue;
+        }
+
+        // Format the selected task count or sequence
+        string taskCountStr = to_string(res.selectedTaskIDs.size()) + " tasks";
+        
+        // Generate analytical commentary based on performance metrics
+        string comment = "";
+        if (res.strategy.find("Sorting") != string::npos) {
+            comment = "Prioritizes all tasks; ignores capacity constraint.";
+        } else if (res.strategy.find("Greedy") != string::npos) {
+            comment = "Fast evaluation; approximate local optima resolution.";
+        } else if (res.strategy.find("Dynamic Programming") != string::npos) {
+            comment = "Guaranteed optimal value configuration.";
+        } else if (res.strategy.find("AI Prediction") != string::npos) {
+            comment = "Evaluated contextual scenario metadata.";
+        }
+
+        cout << left 
+             << setw(35) << res.strategy 
+             << setw(15) << taskCountStr;
+             
+        if (res.strategy.find("AI Prediction") != string::npos) {
+            // AI prediction module simply identifies a target track; does not run calculations itself
+            cout << setw(15) << "N/A" 
+                 << setw(18) << "N/A";
+        } else {
+            cout << setw(15) << res.totalTime 
+                 << setw(18) << res.totalImportance;
+        }
+        
+        cout << fixed << setprecision(4) 
+             << setw(18) << res.executionTime 
+             << comment << "\n";
+    }
+}
+
+
 // ==========================================
 // MAIN PROGRAM
 // ==========================================
@@ -798,10 +871,7 @@ int main() {
                 cout << "\n[-->] Executing Module 6 (Performance Comparison)...\n";
                 // Member 5: implement runComparisonModule() which reads moduleResults[]
                 // and prints the comparison table. Check for "Not Run" entries and skip them.
-                // Uncomment the line below once your function is ready:
-                // runComparisonModule(moduleResults, activeScenarioName);
-                cout << "[!] Comparison module not yet connected. Member 5: implement runComparisonModule().\n";//delete this once done
-                //you may delete the line below or keep it depending on your implementation. you may check the condition in your runComparisonModule().
+                runComparisonModule(moduleResults, activeScenario);
                 cout << "    Note: Run options 4, 5, 6, and 7 before running this.\n"; 
                 break;
             case 9:
