@@ -21,8 +21,6 @@ struct StudyTask {
     string task_type; 
 };
 
-// Every module (Sorting, Greedy, DP, AI/ML) must fill and return one of these.
-// Module 6 reads the global moduleResults vector to build the comparison table.
 struct AlgorithmResult {
     string strategy;                // e.g. "Greedy Strategy"
     vector<string> selectedTaskIDs; // IDs of tasks selected/ranked, e.g. {"T1","T3"}
@@ -652,7 +650,7 @@ int main() {
         cout << "1. Load Built-In Scenarios (Generated Data)\n";
         cout << "2. Input Custom Scenario Manually (User Input)\n";
         cout << "3. View Loaded Task Data Table\n";
-        cout << "4. Run Sorting using Quick Sort.\n"; // the menu choices' description will be changed after all is done
+        cout << "4. Run Sorting using Quick Sort.\n";
         cout << "5. Run Greedy Planning Module\n";
         cout << "6. Run Dynamic Programming Module \n";
         cout << "7. AI/ML Recommendation Module\n";
@@ -682,13 +680,10 @@ int main() {
                 break;
             case 5:
                 cout << "\n[-->] Executing Module 3 (Greedy Planning)... \n";
-                // Member 3: implement runGreedyModule() and return an AlgorithmResult.
                 moduleResults[1] = runGreedyModule(taskDataset, availableStudyTime);
                 break;
             case 6:
                 cout << "\n[-->] Executing Module 4 (Dynamic Programming / 0-1 Knapsack)... \n";
-                // Member 4: implement runDPModule() and return an AlgorithmResult.
-                // Uncomment the line below once your function is ready:
                 moduleResults[2] = runDPModule(taskDataset, availableStudyTime);
                 
                 break;
